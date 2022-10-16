@@ -1,19 +1,3 @@
-<<<<<<< HEAD
-import os
-from pathlib import Path
-from tracking_app import start_tracking
-
-def main(video_path):
-    try:
-        start_tracking(video_path)
-    except Exception as e:
-        raise e
-
-if __name__ == '__main__':
-    video_path = "mal/video_1662704502381-curr_time-3300.mp4"
-    print(video_path)
-    main(video_path)
-=======
 from iris_tracking import iris_track
 from device_detection import device_detect
 from head_pose_detection import head_pose
@@ -27,7 +11,7 @@ import data_sort
 import pandas as pd
 import os
 
-def main(video_path):
+def start_tracking(video_path):
     try:
         print("Starting detection...")
 
@@ -86,7 +70,5 @@ def main(video_path):
     except Exception:
         raise Exception
 
-if __name__ == '__main__':
-    main(video_path="susp/video_1662704240120-curr_time-3300.mp4")
+
     
->>>>>>> 4dd26e9c885ee5892f370aff4298ccc1be93a6b9
