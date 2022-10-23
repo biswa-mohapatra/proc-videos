@@ -34,28 +34,55 @@ def start_tracking(video_path):
 
         count = 0
 
+        #|------------------Params------------------|
+        activites = {
+            "Video Identity" : [],
+            "Detection" : []
+        }
+
         while cap.isOpened():
             success,frame = cap.read()
             if success:
 
+                #|-----------------Starting time------------------------|
+                start_time = time.time()
+                
+                #|-----------------Catching video ID------------------------|
+                activites["Video Identity"].append(video_path.split("/")[1])
+
                 # object detection:
                 object_detected = device_detect(frame,classes)
-                if object_detected == 'cell phone':
-                    print("Malpractice :: Cell Phone detected.")
                 
                 # Head-pose detection:
-
-                head_pose_var = head_pose(frame,face_mesh)
+                
+                head_pose_var= head_pose(frame,face_mesh)
 
                 # tracking iris:
-                track_iris = iris_track(frame,face_mesh) 
+                frame = cv2.flip(frame, 1)
+                track_iris = iris_track(frame,face_mesh)
 
                 # mouth tracking:
                 mouth_track = track_mouth(frame,face_model,landmark_model)
 
                 #run video:
                 #cv2.imshow("Frame",frame)
-                print(f"Head : {head_pose_var}\tIris : {track_iris}\tMouth : {mouth_track}")
+                #print(f"Head : {head_pose_var}\tIris : {track_iris}\tMouth : {mouth_track}")
+
+                #|-----------------Comparing----------------|
+                if object_detected != "cell phone":
+                    if head_pose_var == "Forward":
+                        if mouth_track == "Mouth closed":
+                            if track_iris == "Center":
+                                activites["Detection"].append("Good to go")
+                            else:
+                                activites["Detection"].append("Suspecious")
+                        else:
+                            activites["Detection"].append("Suspecious")
+                    else:
+                        activites["Detection"].append("Suspecious")
+                else:
+                    activites["Detection"].append("Malpractice")
+
                 key = cv2.waitKey(1) & 0xFF
                 count+=1
                 if key == ord('q'):
@@ -63,12 +90,36 @@ def start_tracking(video_path):
                     break
             else:
                 break
-        print(f"Total frames covered = {count}")
+        data = pd.DataFrame(data=activites)
+
+        #|-------------Counts of activity---------------|
+        if "Good to go" in activites["Detection"]:
+            good_count = data["Detection"].value_counts()["Good to go"]
+        else:
+            good_count = 0 
+        if "Suspecious" in activites["Detection"]:
+            susp_count = data["Detection"].value_counts()["Suspecious"]
+        else:
+            susp_count = 0
+        if "Malpractice" in activites["Detection"]:
+            mal_count = data["Detection"].value_counts()["Malpractice"]
+        else:
+            mal_count = 0
+        totl_data = len(data["Detection"])
+        #|--------------Predictions------------|
+        if mal_count >= 5:
+            prediction = "Malpractice"
+        else:
+            if (susp_count/totl_data) >=0.20 and (susp_count/totl_data) <= 0.50:
+                prediction = "Suspicious"
+            elif (susp_count/totl_data) > 0.50:
+                prediction = "Malpractice"
+            else:
+                prediction = "Good to go"
+        print(f"""Video ID = {video_path.split("/")[1]}\tTotal frames covered = {count}\tPrediction = {prediction}""")
         cap.release()
         cv2.destroyAllWindows()
         cv2.waitKey(1)
+        return prediction
     except Exception:
         raise Exception
-
-
-    

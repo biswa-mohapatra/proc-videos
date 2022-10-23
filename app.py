@@ -1,5 +1,6 @@
 import os
-from pathlib import Path
+import pandas as pd
+from pathlib import Path,PureWindowsPath
 from tracking_app import start_tracking
 
 def main(video_path):
@@ -9,7 +10,22 @@ def main(video_path):
         raise e
 
 if __name__ == '__main__':
-    video_path = "mal/video_1662704502381-curr_time-3300.mp4"
-    print(video_path)
-    main(video_path)
-
+    result = {
+        "Video":[],
+        "Human label":[],
+        "Prediction":[]
+    }
+    folders = ["good","susp","mal"]
+    for folder in folders:
+        print(f"Accessing {folder}")
+        videos = os.listdir(f"{folder}/")
+        for video in videos:
+            result["Video"].append(video)
+            result["Human label"].append(folder)
+            video_path = f"{folder}/{video}"
+            print(f"Passing {video_path}")
+            pred = main(video_path)
+            result["Prediction"].append(pred)
+            print(f"Prediction {pred}\n")
+    data = pd.DataFrame(result)
+    print(data)
